@@ -16,3 +16,11 @@ export interface ProductPhoto {
   taken_at: string
   created_at: string
 }
+
+export interface Sku {
+  id: string
+  key: string
+  display_name: string
+  created_at: string
+  updated_at: string
+}

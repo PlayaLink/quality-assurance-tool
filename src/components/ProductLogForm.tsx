@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Product } from '../types'
+import type { Product, Sku } from '../types'
 import { Camera } from './Camera'
 import { Icon } from './Icon'
 
@@ -20,13 +20,50 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
   const [showCamera, setShowCamera] = useState(false)
   const [photos, setPhotos] = useState<Blob[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [skus, setSkus] = useState<Sku[]>([])
+  const [isLoadingSkus, setIsLoadingSkus] = useState(true)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Load SKUs on component mount
+  useEffect(() => {
+    const fetchSkus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('skus')
+          .select('*')
+          .order('key')
+
+        if (error) {
+          console.error('Error fetching SKUs:', error)
+          setError('Failed to load SKU options')
+        } else {
+          setSkus(data || [])
+        }
+      } catch (err) {
+        console.error('Error fetching SKUs:', err)
+        setError('Failed to load SKU options')
+      } finally {
+        setIsLoadingSkus(false)
+      }
+    }
+
+    fetchSkus()
+  }, [])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value }
+      
+      // Auto-populate product name when SKU is selected
+      if (name === 'sku' && value) {
+        const selectedSku = skus.find(sku => sku.key === value)
+        if (selectedSku) {
+          newData.name = selectedSku.display_name
+        }
+      }
+      
+      return newData
+    })
   }
 
   const handlePhotoTaken = (photoBlob: Blob) => {
@@ -140,18 +177,29 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
             <Icon name="hash" size={16} className="inline mr-1" />
             Product SKU *
           </label>
-          <input
-            type="text"
-            id="sku"
-            name="sku"
-            value={formData.sku}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter product SKU"
-            data-testid="sku-input"
-            data-referenceid="sku-input"
-          />
+          {isLoadingSkus ? (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+              Loading SKU options...
+            </div>
+          ) : (
+            <select
+              id="sku"
+              name="sku"
+              value={formData.sku}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              data-testid="sku-select"
+              data-referenceid="sku-select"
+            >
+              <option value="">Select a SKU</option>
+              {skus.map((sku) => (
+                <option key={sku.id} value={sku.key}>
+                  {sku.key} - {sku.display_name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Serial Number Field */}
@@ -178,6 +226,9 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
             Product Name
+            {formData.sku && (
+              <span className="text-xs text-gray-500 ml-2">(auto-filled from SKU)</span>
+            )}
           </label>
           <input
             type="text"
