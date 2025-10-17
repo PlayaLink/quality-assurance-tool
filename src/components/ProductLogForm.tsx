@@ -83,17 +83,25 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
   }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      console.log('📷 Photo selected from library:', file.name, file.size)
-      // Convert file to blob and pass to callback
-      const reader = new FileReader()
-      reader.onload = () => {
-        const arrayBuffer = reader.result as ArrayBuffer
-        const blob = new Blob([arrayBuffer], { type: file.type })
-        setPhotos(prev => [...prev, blob])
-      }
-      reader.readAsArrayBuffer(file)
+    const files = event.target.files
+    if (files && files.length > 0) {
+      console.log('📷 Photos selected from library:', files.length, 'files')
+      
+      // Process each file
+      Array.from(files).forEach((file, index) => {
+        console.log(`📷 Processing file ${index + 1}:`, file.name, file.size)
+        
+        const reader = new FileReader()
+        reader.onload = () => {
+          const arrayBuffer = reader.result as ArrayBuffer
+          const blob = new Blob([arrayBuffer], { type: file.type })
+          setPhotos(prev => [...prev, blob])
+        }
+        reader.readAsArrayBuffer(file)
+      })
+      
+      // Reset the input so the same files can be selected again if needed
+      event.target.value = ''
     }
   }
 
@@ -315,6 +323,23 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
               </div>
             )}
 
+            {/* Clear All Photos Button */}
+            {photos.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  console.log('🗑️ Clearing all photos')
+                  setPhotos([])
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center space-x-2"
+                data-testid="clear-photos-btn"
+                data-referenceid="clear-photos-btn"
+              >
+                <Icon name="trash-2" size={16} />
+                <span>Clear All Photos ({photos.length})</span>
+              </button>
+            )}
+
             {/* Add Photo Button */}
             <button
               type="button"
@@ -324,7 +349,7 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
               data-referenceid="add-photo-btn"
             >
               <Icon name="image" size={16} />
-              <span>Photo Library</span>
+              <span>Add Photos (Multiple)</span>
             </button>
           </div>
         </div>
@@ -347,6 +372,7 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
         type="file"
         accept="image/*"
         capture="environment"
+        multiple
         onChange={handleFileSelect}
         className="hidden"
         data-testid="photo-library-input"
