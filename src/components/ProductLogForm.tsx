@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Product, Sku } from '../types'
+import type { Product, Sku, Collection } from '../types'
 import { Icon } from './Icon'
 
 interface ProductLogFormProps {
@@ -11,7 +11,9 @@ interface ProductLogFormProps {
 export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormProps) => {
   const [formData, setFormData] = useState({
     sku: '',
-    serialNumber: '',
+    collection: '',
+    length: '',
+    width: '',
     name: '',
     description: ''
   })
@@ -20,6 +22,8 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
   const [error, setError] = useState<string | null>(null)
   const [skus, setSkus] = useState<Sku[]>([])
   const [isLoadingSkus, setIsLoadingSkus] = useState(true)
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [isLoadingCollections, setIsLoadingCollections] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Load SKUs on component mount
@@ -46,6 +50,31 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
     }
 
     fetchSkus()
+  }, [])
+
+  // Load Collections on component mount
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('collections')
+          .select('*')
+          .order('name')
+
+        if (error) {
+          console.error('Error fetching collections:', error)
+          setError('Failed to load collection options')
+        } else {
+          setCollections(data || [])
+        }
+      } catch (err) {
+        console.error('Error fetching collections:', err)
+        setError('Failed to load collection options')
+      } finally {
+        setIsLoadingCollections(false)
+      }
+    }
+    fetchCollections()
   }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -150,7 +179,9 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
         .from('products')
         .insert({
           sku: formData.sku,
-          serial_number: formData.serialNumber,
+          collection: formData.collection,
+          length: parseFloat(formData.length) || 0,
+          width: parseFloat(formData.width) || 0,
           name: formData.name || null,
           description: formData.description || null
         })
@@ -173,7 +204,9 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
       // Reset form
       setFormData({
         sku: '',
-        serialNumber: '',
+        collection: '',
+        length: '',
+        width: '',
         name: '',
         description: ''
       })
@@ -192,7 +225,7 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
       data-testid={dataTestId}
       data-referenceid="product-log-form"
     >
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Log New Product</h2>
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">Create New Product</h2>
       
       {error && (
         <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -232,24 +265,82 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
           )}
         </div>
 
-        {/* Serial Number Field */}
+        {/* Collection Field */}
         <div>
-          <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700 mb-2">
-            <Icon name="package" size={16} className="inline mr-1" />
-            Serial Number *
+          <label htmlFor="collection" className="block text-sm font-medium text-gray-700 mb-2">
+            <Icon name="folder" size={16} className="inline mr-1" />
+            Collection *
           </label>
-          <input
-            type="text"
-            id="serialNumber"
-            name="serialNumber"
-            value={formData.serialNumber}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter serial number"
-            data-testid="serial-input"
-            data-referenceid="serial-input"
-          />
+          {isLoadingCollections ? (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+              Loading collection options...
+            </div>
+          ) : (
+            <select
+              id="collection"
+              name="collection"
+              value={formData.collection}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              data-testid="collection-select"
+              data-referenceid="collection-select"
+            >
+              <option value="">Select a collection</option>
+              {collections.map((collection) => (
+                <option key={collection.id} value={collection.key}>
+                  {collection.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Dimensions Fields */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Length Field */}
+          <div>
+            <label htmlFor="length" className="block text-sm font-medium text-gray-700 mb-2">
+              <Icon name="ruler" size={16} className="inline mr-1" />
+              Length (inches) *
+            </label>
+            <input
+              type="number"
+              id="length"
+              name="length"
+              value={formData.length}
+              onChange={handleInputChange}
+              required
+              min="0"
+              step="0.1"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="0"
+              data-testid="length-input"
+              data-referenceid="length-input"
+            />
+          </div>
+
+          {/* Width Field */}
+          <div>
+            <label htmlFor="width" className="block text-sm font-medium text-gray-700 mb-2">
+              <Icon name="ruler" size={16} className="inline mr-1" />
+              Width (inches) *
+            </label>
+            <input
+              type="number"
+              id="width"
+              name="width"
+              value={formData.width}
+              onChange={handleInputChange}
+              required
+              min="0"
+              step="0.1"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="0"
+              data-testid="width-input"
+              data-referenceid="width-input"
+            />
+          </div>
         </div>
 
         {/* Product Name Field */}

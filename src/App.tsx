@@ -40,10 +40,6 @@ function App() {
 
             <div className="grid md:grid-cols-2 gap-8 mb-12">
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center mb-4">
-                  <Icon name="plus" size={24} className="text-blue-600 mr-3" />
-                  <h2 className="text-xl font-semibold">Log New Product</h2>
-                </div>
                 <p className="text-gray-600 mb-4">
                   Take photos and record details for a new furniture product.
                 </p>
@@ -53,7 +49,7 @@ function App() {
                   data-testid="log-product-btn"
                   data-referenceid="log-product-btn"
                 >
-                  Start Logging
+                  Create Product
                 </button>
               </div>
 
@@ -135,7 +131,7 @@ function App() {
                 data-referenceid="nav-log-btn"
               >
                 <Icon name="plus" size={20} />
-                <span>Log Product</span>
+                <span>Create Product</span>
               </button>
 
               <button
