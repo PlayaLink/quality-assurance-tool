@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Product, Sku } from '../types'
-import { Camera } from './Camera'
 import { Icon } from './Icon'
 
 interface ProductLogFormProps {
@@ -17,7 +16,6 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
     description: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showCamera, setShowCamera] = useState(false)
   const [photos, setPhotos] = useState<Blob[]>([])
   const [error, setError] = useState<string | null>(null)
   const [skus, setSkus] = useState<Sku[]>([])
@@ -73,7 +71,6 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
     console.log('Photo blob size:', photoBlob.size)
     console.log('Photo blob type:', photoBlob.type)
     setPhotos(prev => [...prev, photoBlob])
-    setShowCamera(false)
   }
 
   const removePhoto = (index: number) => {
@@ -344,15 +341,6 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
         </button>
       </form>
 
-      {/* Camera Modal */}
-      {showCamera && (
-        <Camera
-          onPhotoTaken={handlePhotoTaken}
-          onClose={() => setShowCamera(false)}
-          dataTestId="product-camera"
-        />
-      )}
-      
       {/* Hidden file input for photo library */}
       <input
         ref={fileInputRef}
