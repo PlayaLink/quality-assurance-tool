@@ -25,26 +25,49 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
 
 
   const takePhoto = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return
+    console.log('📸 takePhoto called')
+    console.log('Video ref:', videoRef.current)
+    console.log('Canvas ref:', canvasRef.current)
+    
+    if (!videoRef.current || !canvasRef.current) {
+      console.error('❌ Missing video or canvas ref')
+      return
+    }
 
     const video = videoRef.current
     const canvas = canvasRef.current
     const context = canvas.getContext('2d')
 
-    if (!context) return
+    console.log('Video element:', video)
+    console.log('Canvas element:', canvas)
+    console.log('Canvas context:', context)
+    console.log('Video dimensions:', { width: video.videoWidth, height: video.videoHeight })
+    console.log('Video ready state:', video.readyState)
+
+    if (!context) {
+      console.error('❌ Could not get canvas context')
+      return
+    }
 
     // Set canvas dimensions to match video
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
+    console.log('Canvas dimensions set:', { width: canvas.width, height: canvas.height })
 
     // Draw the video frame to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height)
+    console.log('✅ Video frame drawn to canvas')
 
     // Convert to blob
     canvas.toBlob((blob) => {
+      console.log('Canvas toBlob callback called')
+      console.log('Blob result:', blob)
       if (blob) {
+        console.log('✅ Blob created successfully, size:', blob.size)
         onPhotoTaken(blob)
         stopCamera()
+      } else {
+        console.error('❌ Failed to create blob from canvas')
       }
     }, 'image/jpeg', 0.9)
   }, [onPhotoTaken, stopCamera])
@@ -53,15 +76,22 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
   useEffect(() => {
     const initializeCamera = async () => {
       try {
+        console.log('🎥 Initializing camera...')
+        console.log('Current location:', location.href)
+        console.log('Protocol:', location.protocol)
+        console.log('Hostname:', location.hostname)
+        
         setIsLoading(true)
         setError(null)
         
         // Check if we're on HTTPS (required for camera access in production)
         if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+          console.error('❌ HTTPS required for camera access')
           setError('Camera access requires HTTPS. Please use a secure connection.')
           return
         }
         
+        console.log('✅ HTTPS check passed, requesting camera access...')
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: { 
             facingMode: 'environment', // Use back camera on mobile
@@ -70,10 +100,12 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
           }
         })
         
+        console.log('✅ Camera access granted, stream:', mediaStream)
         streamRef.current = mediaStream
         setStream(mediaStream)
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream
+          console.log('✅ Video element srcObject set')
         }
       } catch (err) {
         console.error('Camera error:', err)
@@ -197,7 +229,12 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
             {/* Camera Controls */}
             <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
               <button
-                onClick={takePhoto}
+                onClick={() => {
+                  console.log('🔴 Camera capture button clicked!')
+                  console.log('Current stream:', streamRef.current)
+                  console.log('Current stream state:', stream)
+                  takePhoto()
+                }}
                 className="w-16 h-16 bg-white rounded-full border-4 border-gray-300 hover:border-gray-400 transition-colors"
                 data-testid="camera-capture-btn"
                 data-referenceid="camera-capture"

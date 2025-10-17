@@ -67,6 +67,10 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
   }
 
   const handlePhotoTaken = (photoBlob: Blob) => {
+    console.log('📷 Photo taken callback received')
+    console.log('Photo blob:', photoBlob)
+    console.log('Photo blob size:', photoBlob.size)
+    console.log('Photo blob type:', photoBlob.type)
     setPhotos(prev => [...prev, photoBlob])
     setShowCamera(false)
   }
@@ -296,7 +300,10 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
             {/* Add Photo Button */}
             <button
               type="button"
-              onClick={() => setShowCamera(true)}
+              onClick={() => {
+                console.log('📸 Take Photo button clicked - opening camera')
+                setShowCamera(true)
+              }}
               className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
               data-testid="add-photo-btn"
               data-referenceid="add-photo-btn"
