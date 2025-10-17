@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Product, Sku } from '../types'
 import { Camera } from './Camera'
@@ -22,6 +22,7 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
   const [error, setError] = useState<string | null>(null)
   const [skus, setSkus] = useState<Sku[]>([])
   const [isLoadingSkus, setIsLoadingSkus] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Load SKUs on component mount
   useEffect(() => {
@@ -77,6 +78,26 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
 
   const removePhoto = (index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handlePhotoLibrary = () => {
+    console.log('📷 Opening photo library')
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      console.log('📷 Photo selected from library:', file.name, file.size)
+      // Convert file to blob and pass to callback
+      const reader = new FileReader()
+      reader.onload = () => {
+        const arrayBuffer = reader.result as ArrayBuffer
+        const blob = new Blob([arrayBuffer], { type: file.type })
+        setPhotos(prev => [...prev, blob])
+      }
+      reader.readAsArrayBuffer(file)
+    }
   }
 
   const uploadPhoto = async (photoBlob: Blob, productId: string, photoIndex: number) => {
@@ -300,18 +321,13 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
             {/* Add Photo Button */}
             <button
               type="button"
-              onClick={() => {
-                console.log('📸 Take Photo button clicked - opening camera')
-                setShowCamera(true)
-              }}
+              onClick={handlePhotoLibrary}
               className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
               data-testid="add-photo-btn"
               data-referenceid="add-photo-btn"
             >
-              <div className="text-center">
-                <Icon name="camera" size={32} className="mx-auto mb-2 text-gray-400" />
-                <span className="text-gray-600">Take Photo</span>
-              </div>
+              <Icon name="image" size={16} />
+              <span>Photo Library</span>
             </button>
           </div>
         </div>
@@ -336,6 +352,18 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
           dataTestId="product-camera"
         />
       )}
+      
+      {/* Hidden file input for photo library */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="hidden"
+        data-testid="photo-library-input"
+        data-referenceid="photo-library-input"
+      />
     </div>
   )
 }
