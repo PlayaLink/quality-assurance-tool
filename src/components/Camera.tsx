@@ -1,6 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Icon } from './Icon'
 
+// Detect if user is on mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         (typeof window !== 'undefined' && window.innerWidth <= 768)
+}
+
 interface CameraProps {
   onPhotoTaken: (photoBlob: Blob) => void
   onClose: () => void
@@ -12,10 +18,12 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isVideoReady, setIsVideoReady] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const videoReadyRef = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -27,6 +35,27 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
     videoReadyRef.current = false
     setIsVideoReady(false)
   }, [])
+
+  const handlePhotoLibrary = useCallback(() => {
+    console.log('📷 Opening photo library')
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      console.log('📷 Photo selected from library:', file.name, file.size)
+      // Convert file to blob and pass to callback
+      const reader = new FileReader()
+      reader.onload = () => {
+        const arrayBuffer = reader.result as ArrayBuffer
+        const blob = new Blob([arrayBuffer], { type: file.type })
+        onPhotoTaken(blob)
+        onClose()
+      }
+      reader.readAsArrayBuffer(file)
+    }
+  }, [onPhotoTaken, onClose])
 
 
   const takePhoto = useCallback(() => {
@@ -95,6 +124,11 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
         console.log('Protocol:', location.protocol)
         console.log('Hostname:', location.hostname)
         
+        // Detect mobile device
+        const mobile = isMobileDevice()
+        setIsMobile(mobile)
+        console.log('📱 Mobile device detected:', mobile)
+        
         setIsLoading(true)
         setError(null)
         
@@ -106,13 +140,21 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
         }
         
         console.log('✅ HTTPS check passed, requesting camera access...')
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
+        
+        // For mobile, try a simpler camera configuration
+        const constraints = mobile ? {
           video: { 
-            facingMode: 'environment', // Use back camera on mobile
+            facingMode: 'environment'
+          }
+        } : {
+          video: { 
+            facingMode: 'environment',
             width: { ideal: 1920 },
             height: { ideal: 1080 }
           }
-        })
+        }
+        
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
         
         console.log('✅ Camera access granted, stream:', mediaStream)
         streamRef.current = mediaStream
@@ -279,7 +321,8 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
             />
             
             {/* Camera Controls */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-4">
+              {/* Camera Capture Button */}
               <button
                 onClick={() => {
                   console.log('🔴 Camera capture button clicked!')
@@ -301,8 +344,22 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
                   isVideoReady ? 'bg-white border-gray-400' : 'bg-gray-100 border-gray-300'
                 }`} />
               </button>
+              
+              {/* Photo Library Button for Mobile */}
+              {isMobile && (
+                <button
+                  onClick={handlePhotoLibrary}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                  data-testid="photo-library-btn"
+                  data-referenceid="photo-library"
+                >
+                  <Icon name="image" size={16} />
+                  <span>Photo Library</span>
+                </button>
+              )}
+              
               {!isVideoReady && (
-                <div className="text-white text-sm mt-2 text-center">
+                <div className="text-white text-sm text-center">
                   Camera loading...
                 </div>
               )}
@@ -313,6 +370,18 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
 
       {/* Hidden canvas for photo capture */}
       <canvas ref={canvasRef} className="hidden" />
+      
+      {/* Hidden file input for photo library */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="hidden"
+        data-testid="photo-library-input"
+        data-referenceid="photo-library-input"
+      />
     </div>
   )
 }
