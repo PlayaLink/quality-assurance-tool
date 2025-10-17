@@ -15,6 +15,7 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const videoReadyRef = useRef(false)
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -22,6 +23,9 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
       streamRef.current = null
       setStream(null)
     }
+    // Reset video ready state
+    videoReadyRef.current = false
+    setIsVideoReady(false)
   }, [])
 
 
@@ -117,17 +121,43 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
           videoRef.current.srcObject = mediaStream
           console.log('✅ Video element srcObject set')
           
-          // Add event listener for when video is ready
-          videoRef.current.addEventListener('loadedmetadata', () => {
-            console.log('📹 Video metadata loaded')
-            console.log('Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
-            setIsVideoReady(true)
-          })
+          // Check if video is already ready
+          const checkVideoReady = () => {
+            if (videoRef.current && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0) {
+              console.log('📹 Video already ready')
+              console.log('Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight)
+              videoReadyRef.current = true
+              setIsVideoReady(true)
+              return true
+            }
+            return false
+          }
           
-          videoRef.current.addEventListener('canplay', () => {
-            console.log('📹 Video can play')
-            setIsVideoReady(true)
-          })
+          // Check immediately
+          if (!checkVideoReady()) {
+            // Add event listeners for when video becomes ready
+            const handleVideoReady = () => {
+              if (!videoReadyRef.current) {
+                console.log('📹 Video ready event fired')
+                console.log('Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
+                videoReadyRef.current = true
+                setIsVideoReady(true)
+              }
+            }
+            
+            videoRef.current.addEventListener('loadedmetadata', handleVideoReady)
+            videoRef.current.addEventListener('canplay', handleVideoReady)
+            videoRef.current.addEventListener('loadeddata', handleVideoReady)
+            
+            // Fallback timeout - if video isn't ready after 3 seconds, assume it's ready
+            setTimeout(() => {
+              if (!videoReadyRef.current) {
+                console.log('⏰ Video ready timeout - assuming ready')
+                videoReadyRef.current = true
+                setIsVideoReady(true)
+              }
+            }, 3000)
+          }
         }
       } catch (err) {
         console.error('Camera error:', err)
