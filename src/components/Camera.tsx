@@ -23,36 +23,6 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
     }
   }, [])
 
-  const startCamera = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      
-      // Stop any existing stream first
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop())
-      }
-      
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-      })
-      
-      streamRef.current = mediaStream
-      setStream(mediaStream)
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-      }
-    } catch (err) {
-      setError('Unable to access camera. Please check permissions.')
-      console.error('Camera error:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
 
   const takePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return

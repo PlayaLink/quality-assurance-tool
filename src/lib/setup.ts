@@ -65,7 +65,7 @@ export const setupStorage = async () => {
     console.log('Setting up storage bucket...')
     
     // Create storage bucket for product photos
-    const { data, error } = await supabase.storage.createBucket('product-photos', {
+    const { error } = await supabase.storage.createBucket('product-photos', {
       public: true,
       allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
       fileSizeLimit: 10485760 // 10MB

@@ -79,7 +79,7 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
     const fileName = `${productId}_photo_${photoIndex}_${Date.now()}.jpg`
     const file = new File([photoBlob], fileName, { type: 'image/jpeg' })
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('product-photos')
       .upload(fileName, file)
 
