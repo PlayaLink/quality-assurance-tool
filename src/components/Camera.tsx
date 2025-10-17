@@ -56,6 +56,12 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
         setIsLoading(true)
         setError(null)
         
+        // Check if we're on HTTPS (required for camera access in production)
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+          setError('Camera access requires HTTPS. Please use a secure connection.')
+          return
+        }
+        
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: { 
             facingMode: 'environment', // Use back camera on mobile
@@ -70,8 +76,24 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
           videoRef.current.srcObject = mediaStream
         }
       } catch (err) {
-        setError('Unable to access camera. Please check permissions.')
         console.error('Camera error:', err)
+        
+        // Provide specific error messages based on error type
+        if (err instanceof Error) {
+          if (err.name === 'NotAllowedError') {
+            setError('Camera access denied. Please allow camera permissions and try again.')
+          } else if (err.name === 'NotFoundError') {
+            setError('No camera found on this device.')
+          } else if (err.name === 'NotSupportedError') {
+            setError('Camera not supported. Please use HTTPS or a modern browser.')
+          } else if (err.name === 'NotReadableError') {
+            setError('Camera is already in use by another application.')
+          } else {
+            setError('Unable to access camera. Please check permissions and ensure you are using HTTPS.')
+          }
+        } else {
+          setError('Unable to access camera. Please check permissions and ensure you are using HTTPS.')
+        }
       } finally {
         setIsLoading(false)
       }
