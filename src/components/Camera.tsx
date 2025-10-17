@@ -11,6 +11,7 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isVideoReady, setIsVideoReady] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -46,6 +47,15 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
 
     if (!context) {
       console.error('❌ Could not get canvas context')
+      return
+    }
+
+    // Check if video is ready and has dimensions
+    if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+      console.error('❌ Video not ready or has no dimensions')
+      console.log('Video readyState:', video.readyState, '(need >= 2)')
+      console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight)
+      setError('Camera not ready. Please wait a moment and try again.')
       return
     }
 
@@ -106,6 +116,18 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream
           console.log('✅ Video element srcObject set')
+          
+          // Add event listener for when video is ready
+          videoRef.current.addEventListener('loadedmetadata', () => {
+            console.log('📹 Video metadata loaded')
+            console.log('Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
+            setIsVideoReady(true)
+          })
+          
+          videoRef.current.addEventListener('canplay', () => {
+            console.log('📹 Video can play')
+            setIsVideoReady(true)
+          })
         }
       } catch (err) {
         console.error('Camera error:', err)
@@ -233,14 +255,27 @@ export const Camera = ({ onPhotoTaken, onClose, dataTestId }: CameraProps) => {
                   console.log('🔴 Camera capture button clicked!')
                   console.log('Current stream:', streamRef.current)
                   console.log('Current stream state:', stream)
+                  console.log('Video ready:', isVideoReady)
                   takePhoto()
                 }}
-                className="w-16 h-16 bg-white rounded-full border-4 border-gray-300 hover:border-gray-400 transition-colors"
+                disabled={!isVideoReady}
+                className={`w-16 h-16 rounded-full border-4 transition-colors ${
+                  isVideoReady 
+                    ? 'bg-white border-gray-300 hover:border-gray-400' 
+                    : 'bg-gray-200 border-gray-200 cursor-not-allowed'
+                }`}
                 data-testid="camera-capture-btn"
                 data-referenceid="camera-capture"
               >
-                <div className="w-12 h-12 bg-white rounded-full mx-auto border-2 border-gray-400" />
+                <div className={`w-12 h-12 rounded-full mx-auto border-2 ${
+                  isVideoReady ? 'bg-white border-gray-400' : 'bg-gray-100 border-gray-300'
+                }`} />
               </button>
+              {!isVideoReady && (
+                <div className="text-white text-sm mt-2 text-center">
+                  Camera loading...
+                </div>
+              )}
             </div>
           </>
         )}
