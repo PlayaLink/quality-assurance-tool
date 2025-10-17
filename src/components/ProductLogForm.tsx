@@ -94,14 +94,6 @@ export const ProductLogForm = ({ onProductCreated, dataTestId }: ProductLogFormP
     })
   }
 
-  const handlePhotoTaken = (photoBlob: Blob) => {
-    console.log('📷 Photo taken callback received')
-    console.log('Photo blob:', photoBlob)
-    console.log('Photo blob size:', photoBlob.size)
-    console.log('Photo blob type:', photoBlob.type)
-    setPhotos(prev => [...prev, photoBlob])
-  }
-
   const removePhoto = (index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index))
   }

@@ -84,7 +84,8 @@ function App() {
                       data-referenceid={`recent-product-${product.id}`}
                     >
                       <div className="font-medium text-gray-900">{product.sku}</div>
-                      <div className="text-sm text-gray-600">Serial: {product.serial_number}</div>
+                      <div className="text-sm text-gray-600">Collection: {product.collection}</div>
+                      <div className="text-sm text-gray-600">Dimensions: {product.length}" × {product.width}"</div>
                       {product.name && (
                         <div className="text-sm text-gray-500">{product.name}</div>
                       )}

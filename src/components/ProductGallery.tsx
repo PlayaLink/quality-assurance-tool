@@ -58,7 +58,7 @@ export const ProductGallery = ({ dataTestId }: ProductGalleryProps) => {
 
   const filteredProducts = products.filter(product =>
     product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.collection.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (product.name && product.name.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
@@ -128,7 +128,8 @@ export const ProductGallery = ({ dataTestId }: ProductGalleryProps) => {
                     data-referenceid={`product-item-${product.id}`}
                   >
                     <div className="font-medium text-gray-900">{product.sku}</div>
-                    <div className="text-sm text-gray-600">Serial: {product.serial_number}</div>
+                    <div className="text-sm text-gray-600">Collection: {product.collection}</div>
+                    <div className="text-sm text-gray-600">Dimensions: {product.length}" × {product.width}"</div>
                     {product.name && (
                       <div className="text-sm text-gray-500">{product.name}</div>
                     )}
@@ -151,7 +152,7 @@ export const ProductGallery = ({ dataTestId }: ProductGalleryProps) => {
                   <div>
                     <h3 className="text-lg font-semibold">{selectedProduct.sku}</h3>
                     <p className="text-sm text-gray-600">
-                      Serial: {selectedProduct.serial_number}
+                      Collection: {selectedProduct.collection} • Dimensions: {selectedProduct.length}" × {selectedProduct.width}"
                       {selectedProduct.name && ` • ${selectedProduct.name}`}
                     </p>
                   </div>
