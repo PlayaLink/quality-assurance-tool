@@ -128,7 +128,7 @@ The current setup allows all operations for simplicity. In production, you shoul
 ## Next Steps
 
 Once the database is set up, you can:
-1. Start logging products with photos
+1. Creat products with photos
 2. Browse the product gallery
 3. Search and filter products
 4. View product photos in full size
