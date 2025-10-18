@@ -57,7 +57,7 @@ The application will be available at `http://localhost:5173`
 
 ### Logging a New Product
 
-1. Click "Log Product" from the navigation or home page
+1. Click "Create Product" from the navigation or home page
 2. Fill in the required fields:
    - **SKU**: Product SKU (required)
    - **Serial Number**: Product serial number (required)
